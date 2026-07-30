@@ -30,6 +30,7 @@ describe('NotificationsService', () => {
     readAt: undefined,
     searchVector: null,
     user: {} as any,
+    isConverted: false,
   };
 
   const mockUser: User = {

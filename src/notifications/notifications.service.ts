@@ -197,7 +197,37 @@ export class NotificationsService {
 
     notification.isRead = true;
     notification.readAt = new Date();
-    return this.notificationRepository.save(notification);
+    
+    // Automatically record conversion if it's part of an experiment and opened
+    if (notification.experimentId && !notification.isConverted) {
+      notification.isConverted = true;
+      notification.convertedAt = new Date();
+    }
+
+    const updated = await this.notificationsRepository.save(notification);
+    return this.mapToResponseDto(updated);
+  }
+
+  async markMultipleAsRead(
+    notificationIds: string[],
+  ): Promise<NotificationResponseDto[]> {
+    if (!notificationIds || notificationIds.length === 0) {
+      throw new BadRequestException('Notification IDs are required');
+    }
+
+    await this.notificationsRepository.update(
+      { id: In(notificationIds) },
+      {
+        status: NotificationStatus.READ,
+        readAt: new Date(),
+      },
+    );
+
+    const updated = await this.notificationsRepository.find({
+      where: { id: In(notificationIds) },
+    });
+
+    return updated.map((n) => this.mapToResponseDto(n));
   }
 
   async markAllAsRead(userId: string): Promise<{ updated: number }> {
@@ -266,5 +296,50 @@ export class NotificationsService {
         `Failed to send email to ${to}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
+
+    Object.assign(notification, updateNotificationDto);
+    const updated = await this.notificationsRepository.save(notification);
+    return this.mapToResponseDto(updated);
+  }
+
+  async recordConversion(id: string): Promise<NotificationResponseDto> {
+    const notification = await this.notificationsRepository.findOne({
+      where: { id },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(`Notification with ID ${id} not found`);
+    }
+
+    if (!notification.isConverted) {
+      notification.isConverted = true;
+      notification.convertedAt = new Date();
+      const updated = await this.notificationsRepository.save(notification);
+      return this.mapToResponseDto(updated);
+    }
+    return this.mapToResponseDto(notification);
+  }
+
+  private mapToResponseDto(
+    notification: Notification,
+  ): NotificationResponseDto {
+    return {
+      id: notification.id,
+      userId: notification.userId,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      status: notification.status,
+      metadata: notification.metadata,
+      relatedId: notification.relatedId,
+      actionUrl: notification.actionUrl,
+      createdAt: notification.createdAt,
+      updatedAt: notification.updatedAt,
+      readAt: notification.readAt,
+      experimentId: notification.experimentId,
+      variantId: notification.variantId,
+      isConverted: notification.isConverted,
+      convertedAt: notification.convertedAt,
+    };
   }
 }

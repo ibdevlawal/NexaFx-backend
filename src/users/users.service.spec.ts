@@ -29,6 +29,7 @@ describe('UsersService', () => {
     referredBy: null,
     isVerified: true,
     kycTier: UserKycTier.ENHANCED,
+    trustScore: 50,
     isSuspended: false,
     isTwoFactorEnabled: false,
     role: UserRole.USER,

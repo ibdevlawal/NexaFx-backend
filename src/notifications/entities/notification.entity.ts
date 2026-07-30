@@ -58,4 +58,17 @@ export class Notification {
 
   @Column({ type: 'tsvector', nullable: true })
   searchVector: string | null;
+
+  // A/B Testing fields
+  @Column({ nullable: true })
+  experimentId?: string;
+
+  @Column({ nullable: true })
+  variantId?: string;
+
+  @Column({ type: 'boolean', default: false })
+  isConverted: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  convertedAt?: Date;
 }

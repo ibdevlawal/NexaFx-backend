@@ -126,6 +126,9 @@ export class User {
   })
   kycTier: UserKycTier;
 
+  @Column({ type: 'int', default: 50 })
+  trustScore: number;
+
   @Column({ type: 'boolean', default: false })
   isSuspended: boolean;
 
